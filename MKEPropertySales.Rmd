@@ -1,6 +1,8 @@
 ---
-title: "Milwaukee Property Sales Data"
-output: html_notebook
+title: "Milwaukee 2021 Property Sales Data"
+output:
+  pdf_document: default
+  html_notebook: default
 ---
 
 ```{r}
@@ -8,7 +10,7 @@ housing = read.csv("armslengthsales_2021_valid.csv")
 summary(housing)
 ```
 ```{r}
-#removed propertyID and taxkey since it is not relevant to the analysis
+#removed propertyID, taxkey, and address since it is not relevant to the analysis
 housing$PropertyID = NULL
 housing$taxkey = NULL
 housing$Address = NULL
@@ -16,6 +18,101 @@ housing$Address = NULL
 
 ```{r}
 table(housing$PropType)
+```
+```{r}
+library(ggplot2)
+ggplot(housing, aes(x=PropType, fill=PropType)) + geom_bar()
+```
+We can see that the majority of our data comes from the information of residential homes. For this analysis, I will remove all other property types other than residential homes. We will also remove the CondoProject column since it is no longer relevant. We are now left with 5252 observations of 16 variables.
+
+```{r}
+library(dplyr)
+housing2 = filter(housing, PropType == "Residential")
+housing2 = subset(housing2, select = -CondoProject)
+```
+
+```{r}
+ggplot(housing2, aes(District, fill=District)) +geom_bar()+theme(legend.position="none")
+```
+```{r}
+ggplot(housing2, aes(Style, fill=Style)) + geom_bar(stat="count") + coord_flip()+theme(legend.position = "none")
+```
+Converting some character columns into int columns and coerced NULLS to NAs
+```{r}
+table(housing2$Rooms)
+table(housing2$Stories)
+table(housing2$Bdrms)
+
+```
+
+```{r}
+housing2$Rooms = as.integer(housing2$Rooms)
+housing2$Stories = as.integer(housing2$Stories)
+housing2$Bdrms = as.integer(housing2$Bdrms)
+```
+```{r}
+any(is.na(housing2))
+```
+The FinishedSqft, Lotsize, and Sale_price should be numerical, so we must remove the commas and convert them. NULLs will become NAs.
+```{r}
+housing2$FinishedSqft = gsub(",", "", housing2$FinishedSqft)
+housing2$FinishedSqft = as.integer(housing2$FinishedSqft)
+```
+```{r}
+housing2$Lotsize = gsub(",", "", housing2$Lotsize)
+housing2$Lotsize = as.integer(housing2$Lotsize)
+```
+
+```{r}
+housing2$Sale_price = gsub(",", "", housing2$Sale_price)
+```
+```{r}
+housing2$Sale_price = substring(housing2$Sale_price, 2)
+```
+```{r}
+housing2$Sale_price = as.integer(housing2$Sale_price)
+```
+
+Converting Sale_date to date format and then to month
+```{r}
+housing2$Sale_date = format(as.Date(housing2$Sale_date, format = "%m/%d/%Y"), format="%m")
+```
+```{r}
+table(housing2$Sale_date)
+```
+```{r}
+housing2 = housing2 %>% rename(Sale_month = Sale_date)
+```
+Removing PropType since they are all now Residential.
+```{r}
+housing2$PropType = NULL
+```
+Density Curve of Sale_price
+```{r}
+ggplot(housing2, aes(Sale_price))+geom_density()
+```
+```{r}
+ggplot(housing2, aes(x=District, y=Sale_price))+geom_boxplot()+scale_x_discrete(limits=c("1", "2", "3", "4", "5", "6","7", "8", "9", "10", "11", "12", "13", "14", "15"))
+```
+```{r}
+ggplot(housing2, aes(x=Sale_month, y=Sale_price))+geom_boxplot()
+```
+```{r}
+housing2$District = as.factor(housing2$District)
+housing2$nbhd = as.integer(housing2$nbhd)
+housing2$Style = as.factor(housing2$Style)
+housing2$Extwall = as.factor(housing2$Extwall)
+housing2$Stories = as.factor(housing2$Stories)
+housing2$Year_Built = as.integer(housing2$Year_Built)
+housing2 = housing2[housing2$Year_Built != 0, ] #removing years = 0
+housing2$Rooms = as.factor(housing2$Rooms)
+housing2$Units = as.factor(housing2$Units)
+housing2$Bdrms = as.factor(housing2$Bdrms)
+housing2$Fbath = as.factor(housing2$Fbath)
+housing2$Hbath = as.factor(housing2$Hbath)
+housing2$Sale_month = as.factor(housing2$Sale_month)
+
+plot(Sale_price~.,data=housing2)
 ```
 
 
