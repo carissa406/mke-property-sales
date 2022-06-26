@@ -4,6 +4,18 @@ output: html_notebook
 ---
 
 ```{r}
-
+housing = read.csv("armslengthsales_2021_valid.csv")
+summary(housing)
 ```
+```{r}
+#removed propertyID and taxkey since it is not relevant to the analysis
+housing$PropertyID = NULL
+housing$taxkey = NULL
+housing$Address = NULL
+```
+
+```{r}
+table(housing$PropType)
+```
+
 
